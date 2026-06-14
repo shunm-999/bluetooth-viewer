@@ -1,10 +1,12 @@
 package com.shunm.android.abstinence.bluetooth.viewer
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,9 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothAvailability
-import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothAvailabilityChecker
-import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothPermissionRequestContract
+import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothPermissionChecker
 import com.shunm.android.abstinence.bluetooth.viewer.ui.theme.BluetoothViewerTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 private fun BluetoothScreen() {
     val context = LocalContext.current
     val launcher =
-        rememberLauncherForActivityResult(BluetoothPermissionRequestContract()) { isEnabled ->
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isEnabled ->
             println("⭐️ Bluetooth enabled: $isEnabled")
         }
 
@@ -51,17 +51,10 @@ private fun BluetoothScreen() {
             CheckAvailabilityButton(
                 modifier = Modifier.padding(innerPadding),
                 onClick = {
-                    val availability =
-                        BluetoothAvailabilityChecker.getAvailability(context)
-                    when (availability) {
-                        BluetoothAvailability.Available,
-                        BluetoothAvailability.Unavailable -> {
-                            // nop
-                        }
-
-                        BluetoothAvailability.Disabled -> {
-                            launcher.launch(Unit)
-                        }
+                    if (BluetoothPermissionChecker.checkBluetoothConnectPermission(context)) {
+                        // nop
+                    } else {
+                        launcher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                     }
                 }
             )
