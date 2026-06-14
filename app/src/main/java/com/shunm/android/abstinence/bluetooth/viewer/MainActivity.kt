@@ -4,13 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothAvailabilityChecker
 import com.shunm.android.abstinence.bluetooth.viewer.ui.theme.BluetoothViewerTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,10 +25,19 @@ class MainActivity : ComponentActivity() {
         setContent {
             BluetoothViewerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CheckAvailabilityButton(
+                            modifier = Modifier.padding(innerPadding),
+                            onClick = {
+                                val availability = BluetoothAvailabilityChecker.getAvailability(this@MainActivity)
+                                println("⭐️ Bluetooth availability: $availability")
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -43,5 +57,18 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 fun GreetingPreview() {
     BluetoothViewerTheme {
         Greeting("Android")
+    }
+}
+
+@Composable
+fun CheckAvailabilityButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Text(text = "Check Bluetooth Availability")
     }
 }
