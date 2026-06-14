@@ -24,6 +24,23 @@ class BluetoothPairedDeviceScanner {
             BluetoothPairedDeviceScannerResult.Failed
         }
     }
+
+    fun startDiscovery(context: Context) {
+        if (!BluetoothPermissionChecker.checkBluetoothScanPermission(context)) {
+            return
+        }
+
+        val bluetoothManager = getSystemService(context, BluetoothManager::class.java)
+            ?: return
+        val bluetoothAdapter =
+            bluetoothManager.adapter ?: return
+
+        try {
+            bluetoothAdapter.startDiscovery()
+        } catch (e: SecurityException) {
+            // nop
+        }
+    }
 }
 
 sealed interface BluetoothPairedDeviceScannerResult {

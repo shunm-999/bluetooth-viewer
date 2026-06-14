@@ -15,4 +15,13 @@ object BluetoothPermissionChecker {
             true
         }
     }
+
+    fun checkBluetoothScanPermission(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) ==
+                    PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
 }

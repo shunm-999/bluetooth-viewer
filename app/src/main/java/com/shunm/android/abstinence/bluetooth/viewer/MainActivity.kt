@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothDeviceDiscoveryEffect
 import com.shunm.android.abstinence.bluetooth.viewer.scanner.BluetoothPermissionChecker
 import com.shunm.android.abstinence.bluetooth.viewer.ui.theme.BluetoothViewerTheme
 
@@ -41,6 +42,10 @@ private fun BluetoothScreen() {
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isEnabled ->
             println("⭐️ Bluetooth enabled: $isEnabled")
         }
+
+    BluetoothDeviceDiscoveryEffect {
+        
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
