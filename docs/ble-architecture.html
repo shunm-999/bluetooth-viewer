@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Android BLE アプリ 設計ノート</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  header {
+    padding: 48px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  }
+  header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    letter-spacing: 0.02em;
+  }
+  header p { margin: 0; color: var(--muted); }
+  main {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+  nav {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    border-left: 2px solid var(--border);
+    padding-left: 16px;
+  }
+  nav h4 {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  nav ul { list-style: none; padding: 0; margin: 0 0 16px; }
+  nav li { margin: 6px 0; }
+  nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  nav a:hover { color: var(--accent); }
+  section {
+    margin-bottom: 56px;
+  }
+  section h2 {
+    font-size: 22px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    margin-top: 0;
+  }
+  section h3 {
+    font-size: 16px;
+    color: var(--accent);
+    margin-top: 28px;
+  }
+  section h4 {
+    font-size: 14px;
+    margin: 16px 0 6px;
+    color: var(--accent-2);
+  }
+  p, li { font-size: 14px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 12px 0;
+  }
+  .callout.warn { border-color: var(--yellow); background: rgba(251, 191, 36, 0.08); }
+  .callout.tip  { border-color: var(--green);  background: rgba(52, 211, 153, 0.08); }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .tag.presentation { color: #93c5fd; border-color: #3b82f6; }
+  .tag.domain { color: #c4b5fd; border-color: #8b5cf6; }
+  .tag.data { color: #6ee7b7; border-color: #10b981; }
+  .tag.service { color: #fcd34d; border-color: #f59e0b; }
+  .tree {
+    font-family: "SF Mono", "Menlo", monospace;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-size: 13px;
+    overflow-x: auto;
+    color: var(--text);
+    white-space: pre;
+    line-height: 1.6;
+  }
+  .tree .dir { color: var(--accent); }
+  .tree .file { color: var(--text); }
+  .tree .comment { color: var(--muted); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 500; background: var(--panel-2); }
+  td.name { color: var(--accent); font-family: "SF Mono", "Menlo", monospace; white-space: nowrap; }
+  .layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .layer-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .layer-card h4 { margin-top: 0; }
+  .arrow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 18px;
+    margin: 4px 0;
+  }
+  .flow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin: 16px 0;
+  }
+  .flow-step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .flow .arrow { padding: 4px 0; }
+  code.inline {
+    background: var(--panel-2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 12px;
+    color: #fcd34d;
+  }
+  hr.dim {
+    border: 0;
+    border-top: 1px dashed var(--border);
+    margin: 24px 0;
+  }
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    nav { position: relative; top: 0; }
+    .layer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Android BLE 接続アプリ 設計ノート</h1>
+  <p>アーキテクチャ・パッケージ構造・クラス責務の整理（実装コードは含めない学習用ドキュメント）</p>
+</header>
+
+<main>
+  <nav>
+    <h4>目次</h4>
+    <ul>
+      <li><a href="#overview">1. 概要</a></li>
+      <li><a href="#architecture">2. アーキテクチャ</a></li>
+      <li><a href="#layers">3. レイヤーの責務</a></li>
+      <li><a href="#package">4. パッケージ構造</a></li>
+      <li><a href="#classes">5. クラス一覧</a></li>
+      <li><a href="#flows">6. 主要シーケンス</a></li>
+      <li><a href="#order">7. クラス作成順</a></li>
+      <li><a href="#tips">8. BLE特有の注意点</a></li>
+    </ul>
+  </nav>
+
+  <div>
+
+  <!-- 1. 概要 -->
+  <section id="overview">
+    <h2>1. 概要</h2>
+    <p>このアプリは、Android デバイスから周辺の BLE (Bluetooth Low Energy) デバイスをスキャンし、選択した1台に接続して GATT サービス／キャラクタリスティックを閲覧・操作するアプリです。</p>
+
+    <div class="panel">
+      <h4>主なユースケース</h4>
+      <ul>
+        <li>近くの BLE デバイスをスキャンする（広告パケットの受信）</li>
+        <li>スキャン結果から1台を選んで GATT 接続する</li>
+        <li>接続したデバイスの Service / Characteristic を一覧表示する</li>
+        <li>Characteristic に対して Read / Write / Notify を行う</li>
+        <li>切断・再接続を扱う</li>
+      </ul>
+    </div>
+
+    <div class="callout warn">
+      <strong>BLE は Classic Bluetooth と別物</strong><br>
+      既存コードにある <code class="inline">bluetoothAdapter.startDiscovery()</code> や <code class="inline">bondedDevices</code> は Classic Bluetooth の API。BLE では <code class="inline">BluetoothLeScanner</code> と <code class="inline">BluetoothGatt</code> を使う。設計上もこの２つは別レイヤとして扱う想定で進めます。
+    </div>
+  </section>
+
+  <!-- 2. アーキテクチャ -->
+  <section id="architecture">
+    <h2>2. アーキテクチャ</h2>
+    <p>採用するのは「<strong>MVVM + Repository パターン</strong>」。UI状態は ViewModel が StateFlow で保持し、ViewModel は Repository を直接呼び出す。データ源（SDK）は Repository が抽象化する。<strong>UseCase 層はあえて作らない</strong>（後述のトリガが揃ったら抽出）。</p>
+
+    <div class="layer-grid">
+      <div class="layer-card">
+        <h4><span class="tag presentation">Presentation</span></h4>
+        <p>Jetpack Compose の Screen と ViewModel。UiState と Event を扱う。Repository を直接呼ぶ。</p>
+      </div>
+      <div class="layer-card">
+        <h4><span class="tag domain">Domain</span></h4>
+        <p>ドメインモデルと Repository インターフェース。Android SDK に依存しない純粋 Kotlin。</p>
+      </div>
+      <div class="layer-card">
+        <h4><span class="tag data">Data</span></h4>
+        <p>Repository 実装と BLE 周りのアダプタ。callback を Flow に変換する責務もここ。</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>なぜ UseCase 層を作らないか</strong><br>
+      このアプリの操作（startScan / connect / read 等）は Repository のメソッドとほぼ 1:1 で、UseCase を作っても素通しのラッパになりがち。Google の公式アーキテクチャガイドも UseCase は「必要になったら追加する任意の層」としている。後述「UseCase の抽出トリガ」を満たしたら個別に追加する方針。
+    </div>
+
+    <h3>採用する技術スタック</h3>
+    <table>
+      <tr><th>領域</th><th>選択肢</th><th>理由</th></tr>
+      <tr><td>UI</td><td>Jetpack Compose</td><td>既存のセットアップに合わせる</td></tr>
+      <tr><td>非同期</td><td>Kotlin Coroutines + Flow</td><td>BLE のコールバックを Flow にラップして宣言的に扱う</td></tr>
+      <tr><td>状態管理</td><td>StateFlow / SharedFlow</td><td>UI状態は StateFlow、イベントは SharedFlow</td></tr>
+      <tr><td>DI</td><td>Hilt（または手書きの ServiceLocator）</td><td>Repository の差し替えと寿命管理</td></tr>
+      <tr><td>長時間接続</td><td>Foreground Service（必要なら）</td><td>画面を離れても接続維持したい場合</td></tr>
+      <tr><td>ナビゲーション</td><td>Navigation Compose</td><td>スキャン→詳細の画面遷移</td></tr>
+    </table>
+
+    <h3>データの流れ</h3>
+    <div class="flow">
+      <div class="flow-step">① Composable Screen — UiState を受け取って描画、ユーザ操作を ViewModel に伝える</div>
+      <div class="arrow">↓ ↑</div>
+      <div class="flow-step">② ViewModel — Repository を呼び、結果を UiState にまとめて公開</div>
+      <div class="arrow">↓ ↑</div>
+      <div class="flow-step">③ Repository (interface) — Domain 側に置く抽象</div>
+      <div class="arrow">↓ ↑</div>
+      <div class="flow-step">④ Repository (impl) — Data 側。BleScanner / BleConnector を使う</div>
+      <div class="arrow">↓ ↑</div>
+      <div class="flow-step">⑤ BLE Adapter 層 — Android SDK のコールバックを Flow に変換</div>
+    </div>
+  </section>
+
+  <!-- 3. レイヤーの責務 -->
+  <section id="layers">
+    <h2>3. レイヤーの責務</h2>
+
+    <h3>Presentation 層</h3>
+    <ul>
+      <li>Compose の Screen / Component を持つ</li>
+      <li>ViewModel が UiState を <code class="inline">StateFlow&lt;UiState&gt;</code> で公開する</li>
+      <li>権限要求は Activity / Composable 側で <code class="inline">ActivityResultContracts</code> を使う</li>
+      <li>SDK 依存（Manifest, BluetoothManager 等）はここまで</li>
+    </ul>
+
+    <h3>Domain 層</h3>
+    <ul>
+      <li>Pure Kotlin。<strong>Android の import を一切持たない</strong></li>
+      <li>Repository は interface だけが置かれる</li>
+      <li>ドメインモデルは BLE SDK の <code class="inline">BluetoothDevice</code> をそのまま使わず、自前の <code class="inline">BleDevice</code> 等にマップする</li>
+      <li>UseCase は<strong>置かない</strong>。ViewModel が Repository を直接呼ぶ</li>
+    </ul>
+
+    <h3>Data 層</h3>
+    <ul>
+      <li>Repository の実装と BLE アダプタ群</li>
+      <li>SDK のコールバック（<code class="inline">ScanCallback</code> / <code class="inline">BluetoothGattCallback</code>）を <code class="inline">callbackFlow</code> で Flow 化する</li>
+      <li>GATT 操作は <strong>必ず直列化</strong>するキューを通す（並列で投げると失敗する）</li>
+      <li>権限チェックや SecurityException のハンドリングはここに閉じ込める</li>
+    </ul>
+  </section>
+
+  <!-- 4. パッケージ構造 -->
+  <section id="package">
+    <h2>4. パッケージ構造</h2>
+    <p>既存のパッケージ <code class="inline">com.shunm.android.abstinence.bluetooth.viewer</code> 配下を以下のように整理します。</p>
+
+<pre class="tree"><span class="dir">com.shunm.android.abstinence.bluetooth.viewer/</span>
+├── <span class="file">BluetoothViewerApplication.kt</span>      <span class="comment"># Hilt の入口（採用する場合）</span>
+├── <span class="file">MainActivity.kt</span>                    <span class="comment"># 単一 Activity / NavHost の起点</span>
+│
+├── <span class="dir">di/</span>                                 <span class="comment"># DI モジュール</span>
+│   ├── <span class="file">BluetoothModule.kt</span>
+│   └── <span class="file">RepositoryModule.kt</span>
+│
+├── <span class="dir">presentation/</span>
+│   ├── <span class="dir">navigation/</span>
+│   │   ├── <span class="file">AppNavHost.kt</span>
+│   │   └── <span class="file">Route.kt</span>
+│   ├── <span class="dir">scan/</span>                          <span class="comment"># スキャン画面</span>
+│   │   ├── <span class="file">ScanScreen.kt</span>
+│   │   ├── <span class="file">ScanViewModel.kt</span>
+│   │   ├── <span class="file">ScanUiState.kt</span>
+│   │   └── <span class="dir">components/</span>
+│   │       └── <span class="file">DeviceListItem.kt</span>
+│   ├── <span class="dir">device/</span>                        <span class="comment"># デバイス詳細・接続画面</span>
+│   │   ├── <span class="file">DeviceDetailScreen.kt</span>
+│   │   ├── <span class="file">DeviceDetailViewModel.kt</span>
+│   │   ├── <span class="file">DeviceDetailUiState.kt</span>
+│   │   └── <span class="dir">components/</span>
+│   │       ├── <span class="file">ServiceList.kt</span>
+│   │       └── <span class="file">CharacteristicRow.kt</span>
+│   ├── <span class="dir">permission/</span>                    <span class="comment"># 権限UIの抽象</span>
+│   │   └── <span class="file">BluetoothPermissionRequester.kt</span>
+│   └── <span class="dir">common/</span>
+│       ├── <span class="file">LoadingIndicator.kt</span>
+│       └── <span class="file">ErrorMessage.kt</span>
+│
+├── <span class="dir">domain/</span>                              <span class="comment"># UseCase 層は置かない</span>
+│   ├── <span class="dir">model/</span>
+│   │   ├── <span class="file">BleDevice.kt</span>
+│   │   ├── <span class="file">BleScanResult.kt</span>
+│   │   ├── <span class="file">BleConnectionState.kt</span>
+│   │   ├── <span class="file">BleService.kt</span>
+│   │   ├── <span class="file">BleCharacteristic.kt</span>
+│   │   └── <span class="file">BleError.kt</span>
+│   └── <span class="dir">repository/</span>
+│       ├── <span class="file">BleScanRepository.kt</span>
+│       ├── <span class="file">BleConnectionRepository.kt</span>
+│       └── <span class="file">BluetoothStateRepository.kt</span>
+│
+├── <span class="dir">data/</span>
+│   ├── <span class="dir">repository/</span>
+│   │   ├── <span class="file">BleScanRepositoryImpl.kt</span>
+│   │   ├── <span class="file">BleConnectionRepositoryImpl.kt</span>
+│   │   └── <span class="file">BluetoothStateRepositoryImpl.kt</span>
+│   ├── <span class="dir">bluetooth/</span>
+│   │   ├── <span class="file">BluetoothAdapterProvider.kt</span>
+│   │   ├── <span class="dir">scanner/</span>
+│   │   │   ├── <span class="file">BleScanner.kt</span>
+│   │   │   └── <span class="file">ScanCallbackFlow.kt</span>
+│   │   ├── <span class="dir">connection/</span>
+│   │   │   ├── <span class="file">BleConnector.kt</span>
+│   │   │   ├── <span class="file">GattCallbackFlow.kt</span>
+│   │   │   └── <span class="file">GattConnectionHolder.kt</span>
+│   │   ├── <span class="dir">gatt/</span>
+│   │   │   ├── <span class="file">GattOperationQueue.kt</span>
+│   │   │   ├── <span class="file">CharacteristicReader.kt</span>
+│   │   │   ├── <span class="file">CharacteristicWriter.kt</span>
+│   │   │   └── <span class="file">CharacteristicNotifier.kt</span>
+│   │   ├── <span class="dir">permission/</span>
+│   │   │   ├── <span class="file">BluetoothPermission.kt</span>
+│   │   │   └── <span class="file">BluetoothPermissionChecker.kt</span>
+│   │   └── <span class="dir">state/</span>
+│   │       └── <span class="file">BluetoothStateReceiver.kt</span>
+│   └── <span class="dir">mapper/</span>
+│       ├── <span class="file">ScanResultMapper.kt</span>
+│       └── <span class="file">GattMapper.kt</span>
+│
+├── <span class="dir">service/</span>                            <span class="comment"># 任意：接続維持用</span>
+│   └── <span class="file">BleConnectionService.kt</span>
+│
+├── <span class="dir">util/</span>
+│   ├── <span class="file">UuidUtils.kt</span>
+│   └── <span class="file">HexConverter.kt</span>
+│
+└── <span class="dir">ui/theme/</span>
+    ├── <span class="file">Color.kt</span>
+    ├── <span class="file">Theme.kt</span>
+    └── <span class="file">Type.kt</span></pre>
+
+    <div class="callout tip">
+      <strong>移行のヒント</strong> — 既存の <code class="inline">scanner/</code> 配下のクラスは Classic Bluetooth 寄りなので、BLE 化に合わせて <code class="inline">data/bluetooth/</code> 配下へリネーム＆責務分割していく流れになります。
+    </div>
+  </section>
+
+  <!-- 5. クラス一覧 -->
+  <section id="classes">
+    <h2>5. クラス一覧</h2>
+
+    <h3>Presentation 層 <span class="tag presentation">UI</span></h3>
+    <table>
+      <tr><th>クラス／ファイル</th><th>種別</th><th>責務</th></tr>
+      <tr><td class="name">MainActivity</td><td>Activity</td><td>単一Activity。NavHost をホストする。enableEdgeToEdge と Theme の適用のみに留める。</td></tr>
+      <tr><td class="name">AppNavHost</td><td>Composable</td><td>画面遷移ルートの宣言。Scan → DeviceDetail への遷移を持つ。</td></tr>
+      <tr><td class="name">Route</td><td>sealed class</td><td>画面パス（"scan", "device/{address}" 等）を型で定義。</td></tr>
+      <tr><td class="name">ScanScreen</td><td>Composable</td><td>権限チェック→スキャン開始ボタン→デバイス一覧を表示。タップで詳細画面へ。</td></tr>
+      <tr><td class="name">ScanViewModel</td><td>ViewModel</td><td>BleScanRepository を直接呼び ScanUiState を更新。スキャンの開始／停止を制御。</td></tr>
+      <tr><td class="name">ScanUiState</td><td>data class</td><td>{ isScanning, devices, error, hasPermission, isBluetoothEnabled }</td></tr>
+      <tr><td class="name">DeviceListItem</td><td>Composable</td><td>1デバイス分の行。名前・アドレス・RSSI を表示。</td></tr>
+      <tr><td class="name">DeviceDetailScreen</td><td>Composable</td><td>接続状態・Service / Characteristic 一覧を表示。</td></tr>
+      <tr><td class="name">DeviceDetailViewModel</td><td>ViewModel</td><td>接続・サービス検出・Read/Write/Notify を実行。UI状態を公開。</td></tr>
+      <tr><td class="name">DeviceDetailUiState</td><td>data class</td><td>{ connectionState, services, selectedCharacteristic, lastValue, error }</td></tr>
+      <tr><td class="name">BluetoothPermissionRequester</td><td>Composable</td><td>API レベル別の必要権限を <code class="inline">rememberLauncherForActivityResult</code> で要求する薄いラッパ。</td></tr>
+    </table>
+
+    <h3>Domain 層 <span class="tag domain">Pure Kotlin</span></h3>
+    <h4>モデル</h4>
+    <table>
+      <tr><th>クラス</th><th>役割</th></tr>
+      <tr><td class="name">BleDevice</td><td>address, name の最小情報。SDKの BluetoothDevice には依存しない。</td></tr>
+      <tr><td class="name">BleScanResult</td><td>BleDevice + RSSI + 広告データ。スキャン1件分。</td></tr>
+      <tr><td class="name">BleConnectionState</td><td>sealed: Disconnected / Connecting / Connected / Disconnecting / Failed(reason)</td></tr>
+      <tr><td class="name">BleService</td><td>UUID と内包する Characteristic のリスト。</td></tr>
+      <tr><td class="name">BleCharacteristic</td><td>UUID, 性質（read/write/notify可否）, 現在値。</td></tr>
+      <tr><td class="name">BleError</td><td>sealed: PermissionDenied / BluetoothDisabled / ScanFailed / GattError(code) など。</td></tr>
+    </table>
+
+    <h4>Repository インターフェース</h4>
+    <table>
+      <tr><th>クラス</th><th>公開する操作（概念）</th></tr>
+      <tr><td class="name">BleScanRepository</td><td>スキャン開始／停止／結果の Flow 公開</td></tr>
+      <tr><td class="name">BleConnectionRepository</td><td>接続／切断、接続状態の Flow、Service検出、Read/Write/Notify</td></tr>
+      <tr><td class="name">BluetoothStateRepository</td><td>BTのON/OFF状態 Flow、BLE対応可否の問い合わせ</td></tr>
+    </table>
+
+    <h4>UseCase の抽出トリガ</h4>
+    <p>初版では UseCase クラスは作らず、ViewModel が Repository を直接呼ぶ。下のいずれかが現れたら、その操作だけ UseCase を切り出す。</p>
+    <table>
+      <tr><th>トリガ</th><th>このアプリで起き得る例</th><th>抽出すべき UseCase 候補</th></tr>
+      <tr>
+        <td>① 複数 Repository を1操作に束ねたい</td>
+        <td>「BT 状態確認 → 権限確認 → スキャン開始」を ViewModel から1呼び出しにしたい</td>
+        <td class="name">StartScanUseCase</td>
+      </tr>
+      <tr>
+        <td>② 同じ orchestration が2つ以上の ViewModel から呼ばれる</td>
+        <td>接続処理を Scan 画面の「接続して詳細へ」と Detail 画面の init の両方から呼ぶ</td>
+        <td class="name">ConnectDeviceUseCase</td>
+      </tr>
+      <tr>
+        <td>③ ViewModel が肥大化してテストしづらい／ロジックを pure Kotlin で単体テストしたい</td>
+        <td>Notify 有効化のフラグ管理ロジックが複雑になってきた</td>
+        <td class="name">ObserveCharacteristicUseCase</td>
+      </tr>
+    </table>
+    <div class="callout tip">
+      <strong>抽出のコツ</strong> — 全部一気に UseCase 化しない。1メソッドだけ Repository → UseCase に置き換える PR を作る、というレベルで小さく入れる。残りは Repository 直呼びのままで OK。
+    </div>
+
+    <h3>Data 層 <span class="tag data">Android SDK 依存</span></h3>
+    <h4>Repository 実装</h4>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">BleScanRepositoryImpl</td><td>BleScanner + Mapper を組み合わせて domain 型で公開。</td></tr>
+      <tr><td class="name">BleConnectionRepositoryImpl</td><td>BleConnector / GattOperationQueue を束ね、接続ライフサイクルを管理。</td></tr>
+      <tr><td class="name">BluetoothStateRepositoryImpl</td><td>BluetoothAdapterProvider と BluetoothStateReceiver を使う。</td></tr>
+    </table>
+
+    <h4>BLE アダプタ層</h4>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">BluetoothAdapterProvider</td><td>BluetoothManager から adapter を取り出す薄いラッパ。null/未対応の判定もここ。</td></tr>
+      <tr><td class="name">BleScanner</td><td>BluetoothLeScanner の startScan/stopScan を呼ぶ。ScanFilter / ScanSettings の組み立てもここ。</td></tr>
+      <tr><td class="name">ScanCallbackFlow</td><td><code class="inline">callbackFlow</code> で ScanCallback を Flow 化する関数群。</td></tr>
+      <tr><td class="name">BleConnector</td><td>connectGatt を呼んで BluetoothGatt を保持。切断時に close を確実に呼ぶ。</td></tr>
+      <tr><td class="name">GattCallbackFlow</td><td>BluetoothGattCallback を Flow に変換。接続状態・特性変化・読み書き完了などの種類別イベントを流す。</td></tr>
+      <tr><td class="name">GattConnectionHolder</td><td>現在の BluetoothGatt を1つだけ保持し、close 漏れを防ぐ。</td></tr>
+      <tr><td class="name">GattOperationQueue</td><td>Read/Write/Notify 設定を <strong>直列化</strong>するキュー。これが BLE で最重要。</td></tr>
+      <tr><td class="name">CharacteristicReader</td><td>Read 操作 1単位。キュー経由で実行し、対応する onCharacteristicRead を suspend で待つ。</td></tr>
+      <tr><td class="name">CharacteristicWriter</td><td>Write 操作 1単位。WriteType と permission を扱う。</td></tr>
+      <tr><td class="name">CharacteristicNotifier</td><td>Notify 有効化＋Descriptor 書き込み（CCCD）＋値変化 Flow を提供。</td></tr>
+    </table>
+
+    <h4>権限／状態</h4>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">BluetoothPermission</td><td>API 31 未満／以上で必要な権限セットを定数として持つ。</td></tr>
+      <tr><td class="name">BluetoothPermissionChecker</td><td>Context を受け取り権限の有無を返す純粋関数群。</td></tr>
+      <tr><td class="name">BluetoothStateReceiver</td><td>BluetoothAdapter.ACTION_STATE_CHANGED を購読し Flow で公開。</td></tr>
+    </table>
+
+    <h4>Mapper</h4>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">ScanResultMapper</td><td>android.bluetooth.le.ScanResult → BleScanResult。</td></tr>
+      <tr><td class="name">GattMapper</td><td>BluetoothGattService/Characteristic → ドメインモデル。</td></tr>
+    </table>
+
+    <h3>Service 層（任意） <span class="tag service">Service</span></h3>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">BleConnectionService</td><td>画面を離れても接続を維持したい場合のフォアグラウンドサービス。Notification と接続ライフサイクルを管理。最初は省略してもよい。</td></tr>
+    </table>
+
+    <h3>その他</h3>
+    <table>
+      <tr><th>クラス</th><th>責務</th></tr>
+      <tr><td class="name">BluetoothViewerApplication</td><td>Hilt を使うなら @HiltAndroidApp を付ける入口。</td></tr>
+      <tr><td class="name">BluetoothModule</td><td>BluetoothManager / Adapter / Scanner / Connector の提供。</td></tr>
+      <tr><td class="name">RepositoryModule</td><td>Repository interface ↔ Impl の bind。</td></tr>
+      <tr><td class="name">UuidUtils</td><td>UUID 文字列のパースや 16bit→128bit 展開。</td></tr>
+      <tr><td class="name">HexConverter</td><td>ByteArray ↔ Hex 文字列。</td></tr>
+    </table>
+  </section>
+
+  <!-- 6. 主要シーケンス -->
+  <section id="flows">
+    <h2>6. 主要シーケンス</h2>
+
+    <h3>スキャン</h3>
+    <div class="flow">
+      <div class="flow-step">ScanScreen でユーザがスキャン開始ボタンを押す</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">ScanViewModel が BleScanRepository.startScan() を呼ぶ（権限チェックは ViewModel か Repository 実装側で）</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">Impl が BleScanner.start() → BluetoothLeScanner.startScan() を呼び、callbackFlow が結果を流す</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">ScanResultMapper でドメイン型に変換され、ScanViewModel の StateFlow が更新</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">ScanScreen が再コンポーズされて新しいデバイスが表示される</div>
+    </div>
+
+    <h3>接続 → サービス検出 → Read</h3>
+    <div class="flow">
+      <div class="flow-step">DeviceDetailScreen が address を受けて生成される</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">DeviceDetailViewModel が BleConnectionRepository.connect(address) を suspend で呼ぶ</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">Impl が BleConnector.connect() → BluetoothGatt の onConnectionStateChange を待つ</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">接続成功 → ViewModel が Repository.discoverServices() を呼び、onServicesDiscovered を待つ</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">Service / Characteristic を GattMapper で変換し UiState 更新</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">ユーザが Read ボタン → ViewModel が Repository.readCharacteristic(uuid) → GattOperationQueue 経由で実行 → onCharacteristicRead で完了</div>
+    </div>
+
+    <h3>Notify の購読</h3>
+    <div class="flow">
+      <div class="flow-step">ViewModel が Repository.observeCharacteristic(uuid) で Flow を取る</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">Notifier が setCharacteristicNotification + CCCD 書き込みを行う（キュー経由）</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">onCharacteristicChanged が来るたびに Flow に値を流す</div>
+      <div class="arrow">↓</div>
+      <div class="flow-step">ViewModel が collect して UiState の lastValue を更新</div>
+    </div>
+  </section>
+
+  <!-- 7. クラス作成順 -->
+  <section id="order">
+    <h2>7. クラス作成順</h2>
+    <p>「動かして確認できる単位」ごとにフェーズを切ります。各フェーズの末尾に <strong>動作確認ポイント</strong>を置いてあるので、そこまで通ってから次へ進むのが安全です。</p>
+
+    <div class="callout">
+      <strong>原則</strong> — 下から上に積む（モデル → Repository 抽象 → Data 実装 → ViewModel → Composable）。逆順だと依存の置き場所に迷いやすい。UseCase 層は作らない方針なので、ViewModel が直接 Repository を呼ぶ。
+    </div>
+
+    <!-- Phase 0 -->
+    <h3>Phase 0 — 下準備（コードを書く前に）</h3>
+    <table>
+      <tr><th>#</th><th>作業</th><th>狙い</th></tr>
+      <tr><td>0-1</td><td>AndroidManifest に BLE 権限を宣言</td><td>BLUETOOTH_SCAN / BLUETOOTH_CONNECT (API31+) と BLUETOOTH / BLUETOOTH_ADMIN / ACCESS_FINE_LOCATION (API30-) の両方。<code class="inline">&lt;uses-feature android:name="android.hardware.bluetooth_le" required="true"/&gt;</code> も。</td></tr>
+      <tr><td>0-2</td><td>build.gradle にライブラリを追加</td><td>androidx.lifecycle.viewmodel.compose、kotlinx-coroutines-android、Navigation Compose。Hilt 採用なら hilt-android と KSP。</td></tr>
+      <tr><td>0-3</td><td>パッケージのスケルトンだけ切る</td><td>空フォルダで良い。後から物を置く場所が確定していると迷わない。</td></tr>
+    </table>
+
+    <!-- Phase 1 -->
+    <h3>Phase 1 — BT 状態と権限の土台</h3>
+    <p>ここはどの機能からも参照される基盤。先に作ると後段が「権限取れたら呼ぶ」だけで済むようになる。</p>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>依存</th><th>ポイント</th></tr>
+      <tr><td>1-1</td><td class="name">BluetoothPermission</td><td>—</td><td>API レベル別の権限配列を持つだけの定数置き場。最初に決めると以降ブレない。</td></tr>
+      <tr><td>1-2</td><td class="name">BluetoothPermissionChecker</td><td>1-1</td><td>Context を受けて Boolean を返す純粋関数群。<code class="inline">hasScanPermission</code> / <code class="inline">hasConnectPermission</code>。</td></tr>
+      <tr><td>1-3</td><td class="name">BluetoothAdapterProvider</td><td>—</td><td>BluetoothManager から adapter を取得。null 安全に。BLE 非対応端末の判定もここに。</td></tr>
+      <tr><td>1-4</td><td class="name">BluetoothStateReceiver</td><td>1-3</td><td>ACTION_STATE_CHANGED を購読して Flow に流す。<code class="inline">callbackFlow</code> の初練習に最適。</td></tr>
+      <tr><td>1-5</td><td class="name">BluetoothStateRepository</td><td>—</td><td>interface。<code class="inline">isBluetoothSupported()</code>、<code class="inline">observeState(): Flow&lt;BluetoothState&gt;</code> 程度。</td></tr>
+      <tr><td>1-6</td><td class="name">BluetoothStateRepositoryImpl</td><td>1-3, 1-4, 1-5</td><td>Receiver の Flow を加工して domain 型で返す。</td></tr>
+      <tr><td>1-7</td><td class="name">BluetoothPermissionRequester (Composable)</td><td>1-1</td><td>API 別に必要権限を <code class="inline">rememberLauncherForActivityResult</code> で要求する薄いラッパ。</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>動作確認ポイント</strong> — MainActivity に仮の Composable を置き「BLE対応か」「BT が ON か」「権限があるか」を Text で表示できれば Phase 1 完了。BT を OS 設定から OFF→ON した時に表示が変わることまで見ておく。
+    </div>
+
+    <!-- Phase 2 -->
+    <h3>Phase 2 — スキャン機能を MVVM 縦に1本通す</h3>
+    <p>ここが本ドキュメントで最重要のフェーズ。<strong>最小機能でいいから縦に通す</strong>と、以降の機能追加が同じパターンの繰り返しになる。</p>
+    <h4>2-A. Domain（ピュア Kotlin から）</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>2-1</td><td class="name">BleDevice</td><td>address, name のみ。equals は address ベース。</td></tr>
+      <tr><td>2-2</td><td class="name">BleScanResult</td><td>BleDevice + rssi。広告データは後で足せる。</td></tr>
+      <tr><td>2-3</td><td class="name">BleError</td><td>sealed。最初は PermissionDenied / BluetoothDisabled / ScanFailed(code) の3つで十分。</td></tr>
+      <tr><td>2-4</td><td class="name">BleScanRepository</td><td>interface だけ。<code class="inline">startScan()</code> / <code class="inline">stopScan()</code> / <code class="inline">observeResults(): Flow&lt;BleScanResult&gt;</code>。</td></tr>
+    </table>
+
+    <h4>2-B. Data（SDK ラップ）</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>依存</th><th>備考</th></tr>
+      <tr><td>2-5</td><td class="name">ScanResultMapper</td><td>2-1, 2-2</td><td>android.bluetooth.le.ScanResult → BleScanResult。null name の扱いを決める。</td></tr>
+      <tr><td>2-6</td><td class="name">ScanCallbackFlow</td><td>—</td><td>ScanCallback を <code class="inline">callbackFlow</code> で Flow 化する関数。awaitClose で stopScan を確実に呼ぶ。</td></tr>
+      <tr><td>2-7</td><td class="name">BleScanner</td><td>1-3, 2-6</td><td>BluetoothLeScanner.start/stopScan のラッパ。ScanFilter/Settings をここで組む。</td></tr>
+      <tr><td>2-8</td><td class="name">BleScanRepositoryImpl</td><td>2-4, 2-5, 2-7</td><td>Scanner と Mapper を組み合わせて domain 型で公開。重複デバイスの集約もここでやる選択肢あり（後でもよい）。</td></tr>
+    </table>
+
+    <h4>2-C. Presentation</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>2-9</td><td class="name">ScanUiState</td><td>{ isScanning, devices: List&lt;BleScanResult&gt;, error: BleError? }。</td></tr>
+      <tr><td>2-10</td><td class="name">ScanViewModel</td><td><strong>BleScanRepository を直接コンストラクタで受け取る</strong>。<code class="inline">viewModelScope</code> 内で observeResults を collect して devices に反映。startScan/stopScan も Repository をそのまま呼ぶ。</td></tr>
+      <tr><td>2-11</td><td class="name">DeviceListItem (Composable)</td><td>1行表示。先にこれを作って Preview で見ると ScanScreen が楽。</td></tr>
+      <tr><td>2-12</td><td class="name">ScanScreen (Composable)</td><td>UiState を受け取り、ボタン + LazyColumn。権限要求もここから呼ぶ。</td></tr>
+      <tr><td>2-13</td><td class="name">MainActivity の差し替え</td><td>仮 Composable を ScanScreen に置き換える。NavHost は次フェーズで導入。</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>動作確認ポイント</strong> — 実機で「スキャン開始ボタンを押す → 近くの BLE デバイスが続々表示される → 停止ボタンで止まる」が動けば縦1本完了。実機が要る（エミュレータは BLE 非対応）。
+    </div>
+
+    <!-- Phase 3 -->
+    <h3>Phase 3 — ナビゲーション導入</h3>
+    <p>詳細画面を作る前に画面遷移の土台を入れておく。Phase 2 のあとに後付けで足すと ScanViewModel を作り直さずに済む。</p>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>3-1</td><td class="name">Route</td><td>sealed: Scan / DeviceDetail(address)。path 文字列を1箇所に閉じ込める。</td></tr>
+      <tr><td>3-2</td><td class="name">AppNavHost</td><td>NavHost に Scan を起点として登録。tap時に Route.DeviceDetail へ。</td></tr>
+      <tr><td>3-3</td><td class="name">MainActivity 修正</td><td>setContent の中身を AppNavHost に差し替え。</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>動作確認ポイント</strong> — タップでアドレスを引数に詳細画面（仮：address を Text で表示するだけ）に遷移、戻れる。
+    </div>
+
+    <!-- Phase 4 -->
+    <h3>Phase 4 — 接続（GATT 接続まで）</h3>
+    <p>GATT 接続のライフサイクル管理が肝。<strong>close() 漏れ</strong>を防ぐため、所有者を1箇所に集約することを意識する。</p>
+    <h4>4-A. Domain</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>4-1</td><td class="name">BleConnectionState</td><td>sealed: Disconnected / Connecting / Connected / Disconnecting / Failed(reason)。</td></tr>
+      <tr><td>4-2</td><td class="name">BleConnectionRepository</td><td>interface。<code class="inline">connect(address)</code> / <code class="inline">disconnect()</code> / <code class="inline">observeConnectionState(): Flow</code>。</td></tr>
+    </table>
+
+    <h4>4-B. Data（ここが BLE の核）</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>依存</th><th>備考</th></tr>
+      <tr><td>4-3</td><td class="name">GattConnectionHolder</td><td>—</td><td>BluetoothGatt を1つだけ保持。disconnect 時に close を呼ぶ。<strong>これを先に作る</strong>とリソース漏れを防げる。</td></tr>
+      <tr><td>4-4</td><td class="name">GattCallbackFlow</td><td>—</td><td>BluetoothGattCallback を sealed event の Flow に。最初は ConnectionStateChange / ServicesDiscovered だけで足りる。</td></tr>
+      <tr><td>4-5</td><td class="name">BleConnector</td><td>1-3, 4-3, 4-4</td><td>connectGatt を呼んで Holder に保持。接続成功の suspend 関数として包む。</td></tr>
+      <tr><td>4-6</td><td class="name">BleConnectionRepositoryImpl</td><td>4-2, 4-5</td><td>状態 Flow と connect/disconnect を提供。</td></tr>
+    </table>
+
+    <h4>4-C. Presentation</h4>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>4-7</td><td class="name">DeviceDetailUiState</td><td>初期版は { connectionState }。</td></tr>
+      <tr><td>4-8</td><td class="name">DeviceDetailViewModel</td><td>address を SavedStateHandle から取得し、init で <code class="inline">BleConnectionRepository.connect(address)</code> を直接呼ぶ。onCleared で必ず Repository.disconnect()。</td></tr>
+      <tr><td>4-9</td><td class="name">DeviceDetailScreen</td><td>接続状態を表示するだけの最小版に置き換える。</td></tr>
+    </table>
+    <div class="callout warn">
+      <strong>動作確認ポイント</strong> — 接続できること以上に「画面を戻ったときに <code class="inline">close()</code> が呼ばれているか」をログで確認する。複数回接続→離脱を繰り返してリークしないかが大事。
+    </div>
+
+    <!-- Phase 5 -->
+    <h3>Phase 5 — Service / Characteristic の検出</h3>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>5-1</td><td class="name">BleService / BleCharacteristic</td><td>domain モデル。UUID と性質フラグ（read/write/notify可否）。</td></tr>
+      <tr><td>5-2</td><td class="name">GattMapper</td><td>SDK 型 → domain 型。properties のビットフラグ展開もここ。</td></tr>
+      <tr><td>5-3</td><td class="name">BleConnectionRepository に discoverServices() を追加</td><td>onServicesDiscovered を待ち、Mapper で変換して返す suspend 関数。interface と Impl の両方を追記。</td></tr>
+      <tr><td>5-4</td><td class="name">DeviceDetailUiState 拡張</td><td>services: List&lt;BleService&gt; を追加。</td></tr>
+      <tr><td>5-5</td><td class="name">DeviceDetailViewModel 拡張</td><td>接続成功後に Repository.discoverServices() を呼んで services を流し込む。</td></tr>
+      <tr><td>5-6</td><td class="name">ServiceList / CharacteristicRow</td><td>Composable。展開可能なリストで表示。</td></tr>
+    </table>
+    <div class="callout tip">
+      <strong>動作確認ポイント</strong> — 接続後、デバイスの Service と Characteristic の一覧が UUID で表示される。
+    </div>
+
+    <!-- Phase 6 -->
+    <h3>Phase 6 — Read / Write / Notify（GATT 操作）</h3>
+    <p>ここで <code class="inline">GattOperationQueue</code> を導入する。<strong>Phase 5 までは Read を1回も呼んでいない</strong>から、ここで初めて並列禁止の制約に触れる。</p>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>6-1</td><td class="name">GattOperationQueue</td><td>Mutex か Channel で操作を直列化。1操作 = 1 suspend 関数として扱う。<strong>BLE 実装の山場</strong>。</td></tr>
+      <tr><td>6-2</td><td class="name">GattCallbackFlow 拡張</td><td>onCharacteristicRead / Write / Changed のイベントを追加。</td></tr>
+      <tr><td>6-3</td><td class="name">CharacteristicReader</td><td>queue 経由で read を発行→対応 callback を待つ。</td></tr>
+      <tr><td>6-4</td><td class="name">CharacteristicWriter</td><td>WriteType（with/without response）を扱う。</td></tr>
+      <tr><td>6-5</td><td class="name">CharacteristicNotifier</td><td>setCharacteristicNotification + CCCD 書き込み + 値変化 Flow。CCCD の UUID は固定。</td></tr>
+      <tr><td>6-6</td><td class="name">BleConnectionRepository に operation API を追加</td><td>interface に <code class="inline">readCharacteristic(uuid)</code> / <code class="inline">writeCharacteristic(uuid, bytes)</code> / <code class="inline">observeCharacteristic(uuid): Flow&lt;ByteArray&gt;</code> を追加。Impl は Reader/Writer/Notifier に委譲。</td></tr>
+      <tr><td>6-7</td><td class="name">DeviceDetailViewModel 拡張</td><td>Read/Write/Notify の各操作を Repository 経由で呼ぶ。最新値や Notify 状態を UiState に反映。</td></tr>
+      <tr><td>6-8</td><td class="name">UI 操作の追加</td><td>CharacteristicRow に Read/Write/Notify ボタンを足す。</td></tr>
+    </table>
+    <div class="callout warn">
+      <strong>動作確認ポイント</strong> — Read を連打しても落ちない／結果が混ざらない、Write の応答が返る、Notify を有効化すると値変化が UI に流れる。Battery Service (0x180F) など読みやすい Characteristic で検証するとよい。
+    </div>
+
+    <!-- Phase 7 -->
+    <h3>Phase 7 — 仕上げ（任意）</h3>
+    <table>
+      <tr><th>#</th><th>クラス</th><th>備考</th></tr>
+      <tr><td>7-1</td><td class="name">UuidUtils / HexConverter</td><td>UI 表示用。Characteristic 値の hex 変換を Composable に直書きしないため。</td></tr>
+      <tr><td>7-2</td><td class="name">BluetoothViewerApplication + Hilt Module</td><td>DI 導入。Phase 6 までは手書きでつないでいたものを bind に置き換え。</td></tr>
+      <tr><td>7-3</td><td class="name">BleConnectionService</td><td>画面を離れても接続を維持したいときだけ。最初は不要。</td></tr>
+      <tr><td>7-4</td><td class="name">LoadingIndicator / ErrorMessage</td><td>共通UI。後で抽出した方が「何を共通化すべきか」が見えて勉強になる。</td></tr>
+    </table>
+
+    <hr class="dim">
+
+    <h3>全体の依存関係（簡略図）</h3>
+<pre class="tree">Phase 1 (基盤)
+  └─ Phase 2 (スキャン縦1本) ──┐
+                                ├─ Phase 3 (Nav)
+                                └─ Phase 4 (接続)
+                                      └─ Phase 5 (Service検出)
+                                            └─ Phase 6 (Read/Write/Notify)
+                                                  └─ Phase 7 (仕上げ)</pre>
+
+    <div class="callout">
+      <strong>進め方のコツ</strong>
+      <ul>
+        <li><strong>ViewModel から Repository を直接呼ぶ</strong>のがこの設計の基本姿勢。section 5 の「UseCase の抽出トリガ」が発火したら、そのメソッドだけ UseCase 化する</li>
+        <li><strong>Mapper は最初は1関数で十分</strong>。クラスにするのは2つ目の変換が出てきた時で遅くない</li>
+        <li>各 Phase の <strong>動作確認ポイント</strong>をスキップしないこと。BLE は「動いてるように見えて落ちる」バグが多い</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 8. BLE 特有の注意点 -->
+  <section id="tips">
+    <h2>8. BLE 特有の注意点</h2>
+
+    <div class="panel">
+      <h4>① 権限はAPIレベル別で別物</h4>
+      <ul>
+        <li>API 31 (S) 以上: <code class="inline">BLUETOOTH_SCAN</code>, <code class="inline">BLUETOOTH_CONNECT</code></li>
+        <li>API 30 以下: <code class="inline">BLUETOOTH</code>, <code class="inline">BLUETOOTH_ADMIN</code>, <code class="inline">ACCESS_FINE_LOCATION</code>（スキャンに位置情報権限が必須）</li>
+        <li>AndroidManifest にも上記宣言が必要。<code class="inline">usesPermissionFlags="neverForLocation"</code> 等のオプションも検討</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h4>② GATT 操作は並列禁止</h4>
+      <p>Android の BluetoothGatt は1度に1つの操作しか受け付けません。Read を投げて完了コールバックが来る前に次の Write を投げると<strong>静かに失敗</strong>します。<code class="inline">GattOperationQueue</code> のような直列化機構をデータ層に置くのは必須。</p>
+    </div>
+
+    <div class="panel">
+      <h4>③ close() を忘れない</h4>
+      <p>BluetoothGatt はリソースで、必ず <code class="inline">close()</code> を呼ぶ必要があります。接続失敗時／切断時／ViewModel.onCleared() / Activity 破棄時のすべてで漏れがないように、所有者（<code class="inline">GattConnectionHolder</code>）を一箇所に集約します。</p>
+    </div>
+
+    <div class="panel">
+      <h4>④ コールバックは別スレッド</h4>
+      <p>ScanCallback / GattCallback は Binder スレッドで返ります。Compose の State 更新は main で行うため、Flow → ViewModelScope（Dispatchers.Main.immediate）でいいですが、Repository 実装内の重い処理は <code class="inline">Dispatchers.IO</code> に逃がします。</p>
+    </div>
+
+    <div class="panel">
+      <h4>⑤ Notify は CCCD 書き込みまでがセット</h4>
+      <p><code class="inline">setCharacteristicNotification</code> を呼んだだけでは Notify は始まりません。<code class="inline">CLIENT_CHARACTERISTIC_CONFIG_UUID (00002902-0000-1000-8000-00805f9b34fb)</code> のディスクリプタに ENABLE_NOTIFICATION_VALUE を書く必要があります。</p>
+    </div>
+
+    <div class="panel">
+      <h4>⑥ スキャンは消耗する</h4>
+      <p>長時間連続スキャンはバッテリと法的・OS制限の両面で問題になります。UI 側でタイムアウト（例: 30秒）を設けるか、<code class="inline">ScanSettings</code> の <code class="inline">SCAN_MODE_LOW_POWER</code> を採用するか設計時に決める。</p>
+    </div>
+
+    <div class="callout tip">
+      <strong>最初に作る順番（おすすめ）</strong><br>
+      ① Permission / BluetoothAdapterProvider →
+      ② BleScanner + callbackFlow + Mapper →
+      ③ Repository / ViewModel をスキャン画面で一周（Repository は ViewModel から直接呼ぶ）→
+      ④ BleConnector + GattCallbackFlow + GattOperationQueue →
+      ⑤ DeviceDetail 画面で Read/Write/Notify。<br>
+      層を一気に作るより、スキャン機能をMVVM縦に1本通すと迷子になりません。
+    </div>
+  </section>
+
+  </div>
+</main>
+
+</body>
+</html>
