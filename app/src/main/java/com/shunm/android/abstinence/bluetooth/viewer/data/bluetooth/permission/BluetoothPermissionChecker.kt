@@ -1,4 +1,4 @@
-package com.shunm.android.abstinence.bluetooth.viewer.data.permission
+package com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.permission
 
 import android.content.Context
 import android.content.pm.PackageManager
