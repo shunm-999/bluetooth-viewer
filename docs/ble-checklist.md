@@ -30,8 +30,8 @@
 - [x] **1-2** `BluetoothPermissionChecker` — `hasScanPermission` / `hasConnectPermission`
 - [x] **1-3** `BluetoothAdapterProvider` — `BluetoothManager` から adapter を取得、null 安全、BLE 非対応判定
 - [x] **1-4** `BluetoothStateReceiver` — `ACTION_STATE_CHANGED` を `callbackFlow` で購読
-- [ ] **1-5** `BluetoothStateRepository`（interface） — `isBluetoothSupported()` / `observeState()`
-- [ ] **1-6** `BluetoothStateRepositoryImpl` — Receiver の Flow を domain 型に加工
+- [x] **1-5** `BluetoothStateRepository`（interface） — `isBluetoothSupported()` / `observeState()`
+- [x] **1-6** `BluetoothStateRepositoryImpl` — Receiver の Flow を domain 型に加工
 - [ ] **1-7** `BluetoothPermissionRequester`（Composable） — `rememberLauncherForActivityResult` の薄いラッパ
 
 > **動作確認** — MainActivity の仮 Composable で「BLE対応か」「BT ON か」「権限があるか」を Text 表示。OS 設定で BT を OFF→ON した時に表示が変わることまで確認する。

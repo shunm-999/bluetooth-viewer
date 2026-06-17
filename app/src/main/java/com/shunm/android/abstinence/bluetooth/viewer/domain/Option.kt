@@ -14,6 +14,13 @@ sealed interface Option<out T> {
             is None -> null
         }
     }
+
+    fun isSome(): Boolean {
+        return when (this) {
+            is Some<T> -> true
+            is None -> false
+        }
+    }
 }
 
 data class Some<T>(val value: T) : Option<T>

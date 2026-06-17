@@ -5,18 +5,26 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.state.BluetoothStateReceiver.States.State
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 class BluetoothStateReceiver {
 
-    data class State(
-        val previous: BluetoothState,
-        val current: BluetoothState
-    )
+    data class States(
+        val previous: State,
+        val current: State
+    ) {
+        enum class State {
+            Off,
+            TurningOn,
+            On,
+            TurningOff
+        }
+    }
 
-    fun state(context: Context): Flow<State> = callbackFlow {
+    fun state(context: Context): Flow<States> = callbackFlow {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(
                 context: Context?,
@@ -36,7 +44,7 @@ class BluetoothStateReceiver {
                         ?: return
 
                 trySend(
-                    State(
+                    States(
                         previous = previousState,
                         current = currentState
                     )
@@ -51,12 +59,12 @@ class BluetoothStateReceiver {
         }
     }
 
-    private fun Int.toBluetoothState(): BluetoothState? {
+    private fun Int.toBluetoothState(): State? {
         return when (this) {
-            BluetoothAdapter.STATE_OFF -> BluetoothState.Off
-            BluetoothAdapter.STATE_TURNING_ON -> BluetoothState.TurningOn
-            BluetoothAdapter.STATE_ON -> BluetoothState.On
-            BluetoothAdapter.STATE_TURNING_OFF -> BluetoothState.TurningOff
+            BluetoothAdapter.STATE_OFF -> State.Off
+            BluetoothAdapter.STATE_TURNING_ON -> State.TurningOn
+            BluetoothAdapter.STATE_ON -> State.On
+            BluetoothAdapter.STATE_TURNING_OFF -> State.TurningOff
             else -> null
         }
     }
