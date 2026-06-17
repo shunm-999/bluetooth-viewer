@@ -8,7 +8,7 @@ import com.shunm.android.abstinence.bluetooth.viewer.domain.repository.Bluetooth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class BluetoothRepositoryImpl(
+class BluetoothStateRepositoryImpl(
     private val context: Context,
     private val bluetoothAdapterProvider: BluetoothAdapterProvider,
     private val bluetoothStateReceiver: BluetoothStateReceiver,
