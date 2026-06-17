@@ -28,8 +28,8 @@
 
 - [x] **1-1** `BluetoothPermission` — API レベル別の権限定数
 - [x] **1-2** `BluetoothPermissionChecker` — `hasScanPermission` / `hasConnectPermission`
-- [ ] **1-3** `BluetoothAdapterProvider` — `BluetoothManager` から adapter を取得、null 安全、BLE 非対応判定
-- [ ] **1-4** `BluetoothStateReceiver` — `ACTION_STATE_CHANGED` を `callbackFlow` で購読
+- [x] **1-3** `BluetoothAdapterProvider` — `BluetoothManager` から adapter を取得、null 安全、BLE 非対応判定
+- [x] **1-4** `BluetoothStateReceiver` — `ACTION_STATE_CHANGED` を `callbackFlow` で購読
 - [ ] **1-5** `BluetoothStateRepository`（interface） — `isBluetoothSupported()` / `observeState()`
 - [ ] **1-6** `BluetoothStateRepositoryImpl` — Receiver の Flow を domain 型に加工
 - [ ] **1-7** `BluetoothPermissionRequester`（Composable） — `rememberLauncherForActivityResult` の薄いラッパ
