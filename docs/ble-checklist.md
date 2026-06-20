@@ -56,7 +56,7 @@
 
 ### 2-C. Presentation
 
-- [ ] **2-9** `ScanUiState` — `{ isScanning, devices, error }`
+- [x] **2-9** `ScanUiState` — sealed: `Idle` / `Scanning(devices)` / `Error(error)`
 - [ ] **2-10** `ScanViewModel` — `BleScanRepository` をコンストラクタで受け取り、`viewModelScope` で collect
 - [ ] **2-11** `DeviceListItem`（Composable） — 1行表示、Preview で確認
 - [ ] **2-12** `ScanScreen`（Composable） — ボタン + LazyColumn、権限要求もここから

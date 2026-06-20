@@ -1,7 +1,6 @@
 package com.shunm.android.abstinence.bluetooth.viewer.data.repository
 
 import android.Manifest
-import android.bluetooth.le.ScanRecord
 import android.bluetooth.le.ScanResult
 import androidx.annotation.RequiresPermission
 import com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.scanner.BleScanner
@@ -10,6 +9,7 @@ import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleScanResult
 import com.shunm.android.abstinence.bluetooth.viewer.domain.repository.BleScanRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 
 class BleScanRepositoryImpl(
     private val scanner: BleScanner,
@@ -21,10 +21,17 @@ class BleScanRepositoryImpl(
             Manifest.permission.BLUETOOTH_CONNECT
         ]
     )
-    override fun observeResults(): Flow<BleScanResult> {
-        return scanner.scan().map { result ->
-            result.toBleScanResult()
-        }
+    override fun observeResults(): Flow<List<BleScanResult>> {
+        return scanner.scan()
+            .map { it.toBleScanResult() }
+            .scan(emptyList()) { acc, result ->
+                val index = acc.indexOfFirst { it.bleDevice == result.bleDevice }
+                if (index >= 0) {
+                    acc.toMutableList().apply { this[index] = result }
+                } else {
+                    acc + result
+                }
+            }
     }
 
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
