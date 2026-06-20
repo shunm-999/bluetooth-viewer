@@ -49,10 +49,10 @@
 
 ### 2-B. Data
 
-- [ ] **2-5** `ScanResultMapper` — `android.bluetooth.le.ScanResult` → `BleScanResult`
+- [x] **2-5** `ScanResultMapper` — `android.bluetooth.le.ScanResult` → `BleScanResult`（`BleScanRepositoryImpl` に拡張関数として統合、`BleDevice.Name` sealed で null name を表現）
 - [x] **2-6** `ScanCallbackFlow` — `ScanCallback` を `callbackFlow` で Flow 化、`awaitClose` で stopScan（`BleScanner` に統合）
 - [x] **2-7** `BleScanner` — `BluetoothLeScanner` の start/stop ラッパ、`ScanFilter`/`ScanSettings`
-- [ ] **2-8** `BleScanRepositoryImpl` — Scanner と Mapper を組み合わせて domain 型で公開
+- [x] **2-8** `BleScanRepositoryImpl` — Scanner と Mapper を組み合わせて domain 型で公開
 
 ### 2-C. Presentation
 
