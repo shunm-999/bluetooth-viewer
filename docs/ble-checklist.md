@@ -42,10 +42,10 @@
 
 ### 2-A. Domain
 
-- [ ] **2-1** `BleDevice` — address, name。equals は address ベース
-- [ ] **2-2** `BleScanResult` — `BleDevice + rssi`
-- [ ] **2-3** `BleError`（sealed） — `PermissionDenied` / `BluetoothDisabled` / `ScanFailed(code)`
-- [ ] **2-4** `BleScanRepository`（interface） — `startScan()` / `stopScan()` / `observeResults()`
+- [x] **2-1** `BleDevice` — address, name。equals は address ベース
+- [x] **2-2** `BleScanResult` — `BleDevice + rssi`
+- [x] **2-3** `BleError`（sealed） — `PermissionDenied` / `BluetoothDisabled` / `ScanFailed(code)`
+- [x] **2-4** `BleScanRepository`（interface） — `startScan()` / `stopScan()` / `observeResults()`
 
 ### 2-B. Data
 
