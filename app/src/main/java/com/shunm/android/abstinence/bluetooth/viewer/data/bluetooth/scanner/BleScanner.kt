@@ -6,6 +6,8 @@ import android.bluetooth.le.ScanSettings
 import android.content.Context
 import androidx.annotation.RequiresPermission
 import com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.BluetoothAdapterProvider
+import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleError
+import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -21,7 +23,7 @@ class BleScanner(
             .unwrapOrNull()
             ?.bluetoothLeScanner
             ?: run {
-                close(IllegalStateException("Bluetooth is disabled"))
+                close(BleException(BleError.BluetoothDisabled))
                 return@callbackFlow
             }
 
@@ -36,7 +38,7 @@ class BleScanner(
             }
 
             override fun onScanFailed(errorCode: Int) {
-                close(IllegalStateException("ScanFailed: $errorCode"))
+                close(BleException(BleError.ScanFailed))
             }
         }
         scanner.startScan(null, scanSettings, scanCallback)

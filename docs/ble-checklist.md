@@ -57,7 +57,7 @@
 ### 2-C. Presentation
 
 - [x] **2-9** `ScanUiState` — sealed: `Idle` / `Scanning(devices)` / `Error(error)`
-- [ ] **2-10** `ScanViewModel` — `BleScanRepository` をコンストラクタで受け取り、`viewModelScope` で collect
+- [x] **2-10** `ScanViewModel` — `BleScanRepository` をコンストラクタで受け取り、`viewModelScope` で collect、`catch` で `BleException` を `Error` 状態に変換
 - [ ] **2-11** `DeviceListItem`（Composable） — 1行表示、Preview で確認
 - [ ] **2-12** `ScanScreen`（Composable） — ボタン + LazyColumn、権限要求もここから
 - [ ] **2-13** MainActivity を `ScanScreen` に差し替え（NavHost は次フェーズ）
