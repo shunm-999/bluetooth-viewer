@@ -7,13 +7,7 @@ sealed interface ScanUiState {
     data object Idle : ScanUiState
     data class Scanning(
         val devices: List<BleScanResult>
-    ) : ScanUiState {
-        fun add(device: BleScanResult): Scanning {
-            return this.copy(
-                devices = this.devices + device
-            )
-        }
-    }
+    ) : ScanUiState
 
     data class Error(
         val error: BleError
