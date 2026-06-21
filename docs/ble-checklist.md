@@ -10,17 +10,17 @@
 
 ## Phase 0 — 下準備
 
-- [ ] **0-1** AndroidManifest に BLE 権限を宣言
+- [x] **0-1** AndroidManifest に BLE 権限を宣言
   - [x] API 31+: `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT`
   - [x] API 30-: `ACCESS_FINE_LOCATION`（`android:maxSdkVersion="30"`）
-  - [ ] API 30-: `BLUETOOTH` / `BLUETOOTH_ADMIN`
-  - [ ] `<uses-feature android:name="android.hardware.bluetooth_le" required="true"/>`
-- [ ] **0-2** `build.gradle.kts` にライブラリを追加
-  - [ ] `androidx.lifecycle.viewmodel.compose`
-  - [ ] `kotlinx-coroutines-android`
-  - [ ] Navigation Compose
-  - [ ] （任意）Hilt + KSP
-- [ ] **0-3** パッケージのスケルトンを切る（空フォルダで OK）
+  - [x] API 30-: `BLUETOOTH` / `BLUETOOTH_ADMIN`
+  - [x] `<uses-feature android:name="android.hardware.bluetooth_le" required="true"/>`
+- [x] **0-2** `build.gradle.kts` にライブラリを追加
+  - [x] `androidx.lifecycle.viewmodel.compose`（+ `lifecycle-runtime-compose`）
+  - [x] `kotlinx-coroutines-android`
+  - [x] Navigation Compose
+  - [ ] Hilt + KSP（Hilt Gradle プラグインが AGP 9 系未サポート＝`BaseExtension` 参照エラー。Phase 7-2 で再検討）
+- [x] **0-3** パッケージのスケルトンを切る（空フォルダで OK）
 
 ---
 
