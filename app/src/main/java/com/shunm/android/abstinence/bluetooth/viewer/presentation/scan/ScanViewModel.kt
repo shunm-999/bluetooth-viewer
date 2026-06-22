@@ -4,13 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleException
 import com.shunm.android.abstinence.bluetooth.viewer.domain.repository.BleScanRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class ScanViewModel(
+@HiltViewModel
+class ScanViewModel @Inject constructor(
     private val bleScanRepository: BleScanRepository
 ) : ViewModel() {
 

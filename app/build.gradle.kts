@@ -1,20 +1,20 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.shunm.android.abstinence.bluetooth.viewer"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.shunm.android.abstinence.bluetooth.viewer"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -50,6 +50,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

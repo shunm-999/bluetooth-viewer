@@ -19,7 +19,7 @@
   - [x] `androidx.lifecycle.viewmodel.compose`（+ `lifecycle-runtime-compose`）
   - [x] `kotlinx-coroutines-android`
   - [x] Navigation Compose
-  - [ ] Hilt + KSP（Hilt Gradle プラグインが AGP 9 系未サポート＝`BaseExtension` 参照エラー。Phase 7-2 で再検討）
+  - [x] Hilt + KSP（Phase 2-10 で `ScanViewModel` を `hiltViewModel()` 経由で取りたくなったため前倒し導入）
 - [x] **0-3** パッケージのスケルトンを切る（空フォルダで OK）
 
 ---
@@ -133,7 +133,7 @@
 ## Phase 7 — 仕上げ（任意）
 
 - [ ] **7-1** `UuidUtils` / `HexConverter` — UI 表示用
-- [ ] **7-2** `BluetoothViewerApplication` + Hilt Module — DI 導入
+- [x] **7-2** `BluetoothViewerApplication` + Hilt Module — DI 導入（Phase 2-10 前倒し: `RepositoryModule` で `BleScanRepository` を bind、`BluetoothStateRepository` 側は未着手）
 - [ ] **7-3** `BleConnectionService` — フォアグラウンドサービス（画面離れても接続維持したい時のみ）
 - [ ] **7-4** `LoadingIndicator` / `ErrorMessage` — 共通 UI
 

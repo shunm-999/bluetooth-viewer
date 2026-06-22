@@ -6,8 +6,9 @@ import android.content.Context
 import com.shunm.android.abstinence.bluetooth.viewer.domain.None
 import com.shunm.android.abstinence.bluetooth.viewer.domain.Option
 import com.shunm.android.abstinence.bluetooth.viewer.domain.Some
+import javax.inject.Inject
 
-class BluetoothAdapterProvider {
+class BluetoothAdapterProvider @Inject constructor() {
 
     fun getAdapter(context: Context): Option<BluetoothAdapter> {
         val bluetoothManager: BluetoothManager =

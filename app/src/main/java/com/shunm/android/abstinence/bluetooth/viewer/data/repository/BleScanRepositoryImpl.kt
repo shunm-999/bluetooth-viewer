@@ -7,11 +7,12 @@ import com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.scanner.BleS
 import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleDevice
 import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleScanResult
 import com.shunm.android.abstinence.bluetooth.viewer.domain.repository.BleScanRepository
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 
-class BleScanRepositoryImpl(
+class BleScanRepositoryImpl @Inject constructor(
     private val scanner: BleScanner,
 ) : BleScanRepository {
 

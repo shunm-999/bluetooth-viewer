@@ -8,13 +8,15 @@ import androidx.annotation.RequiresPermission
 import com.shunm.android.abstinence.bluetooth.viewer.data.bluetooth.BluetoothAdapterProvider
 import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleError
 import com.shunm.android.abstinence.bluetooth.viewer.domain.model.BleException
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class BleScanner(
+class BleScanner @Inject constructor(
     private val adapterProvider: BluetoothAdapterProvider,
-    private val context: Context,
+    @ApplicationContext private val context: Context,
 ) {
 
     @RequiresPermission(android.Manifest.permission.BLUETOOTH_SCAN)
